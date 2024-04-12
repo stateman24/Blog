@@ -1,14 +1,20 @@
+from django.db.models import Count
 from django.shortcuts import render, get_object_or_404
 from .models import Post
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import EmailForm, CommentForm
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
+from taggit.models import Tag
 
 
 # To list all publised posts 
-def post_list(request):
+def post_list(request, tag_slug=None):
     posts_list = Post.published.all()
+    tags = None
+    if tag_slug:
+        tags = get_object_or_404(Tag, slug=tag_slug)
+        posts_list = posts_list.filter(tags__in=[tags])
     # paginate list of 3
     paginator = Paginator(posts_list, 3)
     page_number = request.GET.get('page', 1)
@@ -22,7 +28,7 @@ def post_list(request):
         # if page number is out of the last page result
         posts = paginator.page(paginator.num_pages)
 
-    context = {'posts': posts}
+    context = {'posts': posts, "tags":tags}
     return render(request, 'blog/post/list.html', context)
 
 
@@ -31,7 +37,13 @@ def post_detail(request, post):
     post = get_object_or_404(Post,  
                              status=Post.Status.PUBLISHED,
                              slug=post)
-    context = {'post': post}
+    comments = post.comments.filter(active=True)
+    form = CommentForm()
+
+    post_tag_id = post.tags.values_list('id', flat=True)
+    similar_posts = Post.objects.filter(tags__in=post_tag_id).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tag=Count("tags")).order_by("same_tag",'-publish')[:4]
+    context = {'post': post, 'comments': comments, 'form': form, "similar_posts": similar_posts}
     return render(request, 'blog/post/detail.html', context)
 
 
