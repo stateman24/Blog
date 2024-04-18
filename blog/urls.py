@@ -19,7 +19,7 @@ urlpatterns = [
     path('<int:post_id>/share/', share_post, name='share_post'),
     path('<int:post_id>/comment/', post_comment, name='post_comment'),
     path('tag/<slug:tag_slug>/', post_list, name='post_list_by_tag'),
-    path('feeds/', LatestPostsFeed(), name='feeds'),
-    path('search/', post_search, name='search'),
-    path('sitemap.xml', sitemap, {"sitemaps": sitemaps}, name='django.contrib.sitemaps.views'),
+    path('feeds.get/', LatestPostsFeed(), name='feeds'),
+    path('search.get/', post_search, name='search'),
+    path('sitemap.xml/', sitemap, {"sitemaps": sitemaps}, name='django.contrib.sitemaps.views'),
 ]
